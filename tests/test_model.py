@@ -374,6 +374,29 @@ def test_inherit_schemamodel_fields():
     assert expected == Child.to_schema()
 
 
+@pytest.mark.xfail(reason="Bug repro TODO: file an issue", strict=True)
+def test_inherit_schemamodel_fields_alias():
+    """Test that columns and indices are inherited."""
+
+    class Base(pa.SchemaModel):
+        a: Series[int]
+        idx: Index[str]
+
+    class Mid(Base):
+        b: Series[str] = pa.Field(alias="_b")
+        idx: Index[str]
+
+    class Child(Mid):
+        b: Series[int]
+
+    expected = pa.DataFrameSchema(
+        columns={"a": pa.Column(int), "b": pa.Column(int)},
+        index=pa.Index(str),
+    )
+
+    assert expected == Child.to_schema()
+
+
 def test_inherit_field_checks():
     """Test that checks are inherited and overridden."""
 
@@ -554,3 +577,23 @@ def test_inherit_alias():
     assert len(schema.columns) == 2
     assert schema.columns.get("_a_child", None) is not None
     assert schema.columns.get("_b", None) is not None
+
+
+@pytest.mark.xfail(reason="Bug repro TODO: file an issue", strict=True)
+def test_inherit_override():
+    """Test that overrides are reflected properly as expected"""
+
+    class Base(pa.SchemaModel):
+        a: Series[int] = pa.Field(alias="_a")
+        b: Series[int] = pa.Field(alias="_b")
+
+    class Child(Base):
+        a: Series[str] = pa.Field(alias="_a_child")
+        b: Series[str]  # This line does not pass the test
+        # b: Series[str] = pa.Field()  # This line passes the test
+
+    schema = Child.to_schema()
+    print(schema.columns)
+    assert len(schema.columns) == 2
+    assert schema.columns.get("_a_child") == pa.Column(str, name="_a_child")
+    assert schema.columns.get("b") == pa.Column(str, name="b")
