@@ -93,6 +93,10 @@ class SchemaModel:
     def __new__(cls, *args, **kwargs):
         raise TypeError(f"{cls.__name__} may not be instantiated.")
 
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        cls.to_schema()  # called for its side effects
+
     @classmethod
     def to_schema(cls) -> DataFrameSchema:
         """Create :class:`~pandera.DataFrameSchema` from the :class:`.SchemaModel`."""

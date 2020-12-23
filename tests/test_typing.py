@@ -181,16 +181,8 @@ def test_literal_new_pandas_dtype(
     _test_literal_pandas_dtype(model, pandas_dtype)
 
 
-class SchemaDatetimeTZDtype(pa.SchemaModel):
-    col: Series[pd.DatetimeTZDtype]
-
-
 class SchemaCategoricalDtype(pa.SchemaModel):
     col: Series[pd.CategoricalDtype]
-
-
-class SchemaPeriodDtype(pa.SchemaModel):
-    col: Series[pd.PeriodDtype]
 
 
 class SchemaSparseDtype(pa.SchemaModel):
@@ -216,20 +208,36 @@ def _test_pandas_extension_dtype(
 
 
 @pytest.mark.parametrize(
-    "model, dtype, has_mandatory_args",
+    "model, dtype",
     [
-        (SchemaDatetimeTZDtype, pd.DatetimeTZDtype, True),
-        (SchemaCategoricalDtype, pd.CategoricalDtype, False),
-        (SchemaPeriodDtype, pd.PeriodDtype, True),
-        (SchemaSparseDtype, pd.SparseDtype, False),
-        (SchemaIntervalDtype, pd.IntervalDtype, False),
+        (SchemaCategoricalDtype, pd.CategoricalDtype),
+        (SchemaSparseDtype, pd.SparseDtype),
+        (SchemaIntervalDtype, pd.IntervalDtype),
     ],
 )
-def test_legacy_pandas_extension_dtype(
-    model, dtype: pd.core.dtypes.base.ExtensionDtype, has_mandatory_args: bool
+def test_legacy_pandas_extension_dtype_no_mandatory_args(
+    model, dtype: pd.core.dtypes.base.ExtensionDtype
 ):
     """Test type annotations with the legacy pandas dtypes."""
-    _test_pandas_extension_dtype(model, dtype, has_mandatory_args)
+    _test_pandas_extension_dtype(model, dtype, False)
+
+
+def test_legacy_pandas_extension_dtype_has_mandatory_args():
+    """Test type annotations with the legacy pandas dtypes."""
+    err_msg = "cannot be instantiated"
+    with pytest.raises(TypeError, match=err_msg):
+
+        class SchemaDatetimeTZDtype(
+            pa.SchemaModel
+        ):  # pylint: disable=unused-variable
+            col: Series[pd.DatetimeTZDtype]
+
+    with pytest.raises(TypeError, match=err_msg):
+
+        class SchemaPeriodDtype(
+            pa.SchemaModel
+        ):  # pylint: disable=unused-variable
+            col: Series[pd.PeriodDtype]
 
 
 if not LEGACY_PANDAS:

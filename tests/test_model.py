@@ -34,31 +34,28 @@ def test_invalid_annotations():
     recognized.
     """
 
-    class Missing(pa.SchemaModel):
-        a = pa.Field()
-        b: Series[int]
-        c = pa.Field()
-        _d = 0
-
     err_msg = re.escape("Found missing annotations: ['a', 'c']")
     with pytest.raises(pa.errors.SchemaInitError, match=err_msg):
-        Missing.to_schema()
 
-    class Invalid(pa.SchemaModel):
-        a: int
+        class Missing(pa.SchemaModel):  # pylint: disable=unused-variable
+            a = pa.Field()
+            b: Series[int]
+            c = pa.Field()
+            _d = 0
 
     with pytest.raises(pa.errors.SchemaInitError, match="Invalid annotation"):
-        Invalid.to_schema()
+
+        class Invalid(pa.SchemaModel):  # pylint: disable=unused-variable
+            a: int
 
     from decimal import Decimal  # pylint:disable=C0415
-
-    class InvalidDtype(pa.SchemaModel):
-        d: Series[Decimal]  # type: ignore
 
     with pytest.raises(
         TypeError, match="python type '<class 'decimal.Decimal'>"
     ):
-        InvalidDtype.to_schema()
+
+        class InvalidDtype(pa.SchemaModel):  # pylint: disable=unused-variable
+            d: Series[Decimal]  # type: ignore
 
 
 def test_optional_column():
@@ -76,13 +73,12 @@ def test_optional_column():
 def test_optional_index():
     """Test that optional indices are not required."""
 
-    class Schema(pa.SchemaModel):
-        idx: Optional[Index[str]]
-
     with pytest.raises(
         pa.errors.SchemaInitError, match="Index 'idx' cannot be Optional."
     ):
-        Schema.to_schema()
+
+        class Schema(pa.SchemaModel):  # pylint: disable=unused-variable
+            idx: Optional[Index[str]]
 
 
 def test_schemamodel_with_fields():
@@ -108,13 +104,13 @@ def test_schemamodel_with_fields():
 
 
 def test_invalid_field():
-    class Schema(pa.SchemaModel):
-        a: Series[int] = 0
 
     with pytest.raises(
         pa.errors.SchemaInitError, match="'a' can only be assigned a 'Field'"
     ):
-        Schema.to_schema()
+
+        class Schema(pa.SchemaModel):  # pylint: disable=unused-variable
+            a: Series[int] = 0
 
 
 def test_multiindex():
@@ -138,11 +134,10 @@ def test_multiindex():
 def test_column_check_name():
     """Test that column name is mandatory."""
 
-    class Schema(pa.SchemaModel):
-        a: Series[int] = pa.Field(check_name=False)
-
     with pytest.raises(pa.errors.SchemaInitError):
-        Schema.to_schema()
+
+        class Schema(pa.SchemaModel):  # pylint: disable=unused-variable
+            a: Series[int] = pa.Field(check_name=False)
 
 
 def test_single_index_check_name():
@@ -274,19 +269,18 @@ def test_field_and_check():
 def test_check_non_existing():
     """Test a check on a non-existing column."""
 
-    class Schema(pa.SchemaModel):
-        a: Series[int]
-
-        @pa.check("nope")
-        @classmethod
-        def int_column_lt_100(cls, series: pd.Series) -> Iterable[bool]:
-            return series < 100
-
     err_msg = (
         "Check int_column_lt_100 is assigned to a non-existing field 'nope'"
     )
     with pytest.raises(pa.errors.SchemaInitError, match=err_msg):
-        Schema.to_schema()
+
+        class Schema(pa.SchemaModel):  # pylint: disable=unused-variable
+            a: Series[int]
+
+            @pa.check("nope")
+            @classmethod
+            def int_column_lt_100(cls, series: pd.Series) -> Iterable[bool]:
+                return series < 100
 
 
 def test_multiple_checks():
