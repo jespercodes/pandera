@@ -52,7 +52,23 @@ class FieldInfo:
         "regex",
         "check_name",
         "alias",
+        "original_name",
     )
+
+    def __set_name__(self, owner, name):
+        self.original_name = name
+
+    def __get__(self, instance, owner=None):
+        if instance is not None:
+            raise AttributeError("SchemaModel cannot be instantiated")
+
+        if self.alias is not None:
+            return self.alias
+        else:
+            return self.original_name
+
+    def __set__(self, instance, value):
+        raise ValueError
 
     def __init__(
         self,
@@ -71,6 +87,7 @@ class FieldInfo:
         self.regex = regex
         self.alias = alias
         self.check_name = check_name
+        self.original_name = None
 
     def _to_schema_component(
         self,
@@ -101,6 +118,10 @@ class FieldInfo:
             name=name,
             checks=checks,
         )
+
+    def column_name(self):
+        """Return the name of the field used in the DataFrame"""
+        return self.__get__(None)
 
     def to_index(
         self,
